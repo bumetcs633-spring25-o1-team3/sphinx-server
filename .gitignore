@@ -1,0 +1,33 @@
+sphinx-server/HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### VS Code ###
+.vscode/
+
+### React ###
+sphinx-web/node_modules/
+sphinx-web/.pnp
+sphinx-web/.pnp.js
+sphinx-web/coverage
+sphinx-web/build
+sphinx-web/.DS_Store
+sphinx-web/.env.local
+sphinx-web/.env.development.local
+sphinx-web/.env.test.local
+sphinx-web/.env.production.local
+sphinx-web/npm-debug.log*
+sphinx-web/yarn-debug.log*
+sphinx-web/yarn-error.log*
