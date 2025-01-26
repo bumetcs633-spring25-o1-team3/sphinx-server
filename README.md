@@ -15,15 +15,6 @@
 ./gradlew bootRun
 ```
 
-### Using JAR file
-```bash
-# Build JAR
-./gradlew build
-
-# Run JAR
-java -jar build/libs/<project-name>.jar
-```
-
 ## Configuration
 - Application configuration is in `src/main/resources/application.properties`
 
