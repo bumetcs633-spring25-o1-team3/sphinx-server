@@ -3,7 +3,7 @@ spring:
   application:
     name: sphinx-server
   datasource:
-    url: jdbc:postgresql://localhost:5432/sphinx_db
+    url: jdbc:postgresql://localhost:5432/sphinx
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
