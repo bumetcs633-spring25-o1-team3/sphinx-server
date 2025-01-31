@@ -27,8 +27,6 @@ POSTGRES_USER=your-username
 POSTGRES_PASSWORD=your-password
 ```
 
-Note: Make sure to add `.env` to your `.gitignore` file.
-
 ### Application Configuration
 The application uses YAML configuration files located in `src/main/resources/`:
 
