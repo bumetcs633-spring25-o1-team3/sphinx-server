@@ -1,0 +1,4 @@
+# application.yml (default configuration)
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
