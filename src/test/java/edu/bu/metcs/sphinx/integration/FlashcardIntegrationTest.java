@@ -1,6 +1,5 @@
 package edu.bu.metcs.sphinx.integration;
 
-import edu.bu.metcs.sphinx.BaseIntegrationTest;
 import edu.bu.metcs.sphinx.dto.FlashcardDTO;
 import edu.bu.metcs.sphinx.dto.FlashcardSetDTO;
 import edu.bu.metcs.sphinx.model.Flashcard;
@@ -22,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
-class FlashcardIntegrationTest extends BaseIntegrationTest {
+class FlashcardIntegrationTest {
 
     @Autowired
     private FlashcardSetService flashcardSetService;
