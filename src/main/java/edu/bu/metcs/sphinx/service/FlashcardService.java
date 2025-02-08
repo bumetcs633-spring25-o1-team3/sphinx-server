@@ -27,57 +27,30 @@ public class FlashcardService {
         this.flashcardSetRepository = flashcardSetRepository;
     }
 
-    public FlashcardSet createFlashcardSet(FlashcardSetDTO dto) {
-        FlashcardSet flashcardSet = new FlashcardSet();
-        flashcardSet.setName(dto.getName());
-        flashcardSet.setDescription(dto.getDescription());
-        return flashcardSetRepository.save(flashcardSet);
-    }
 
-    public List<FlashcardSet> getAllFlashcardSets() {
-        return flashcardSetRepository.findAll();
-    }
 
-    public FlashcardSet getFlashcardSet(UUID id) {
-        return flashcardSetRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("FlashcardSet not found"));
-    }
-
-    public FlashcardSet updateFlashcardSet(UUID id, FlashcardSetDTO dto) {
-        FlashcardSet existingSet = flashcardSetRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("FlashcardSet not found"));
-
-        existingSet.setName(dto.getName());
-        existingSet.setDescription(dto.getDescription());
-        return flashcardSetRepository.save(existingSet);
-    }
-
-    public void deleteFlashcardSet(UUID id) {
-        flashcardSetRepository.deleteById(id);
-    }
-
-    public Flashcard createFlashcard(FlashcardDTO dto) {
+    public FlashcardSet createFlashcard(FlashcardDTO dto) {
         FlashcardSet flashcardSet = flashcardSetRepository.findById(dto.getFlashcardSetId())
                 .orElseThrow(() -> new RuntimeException("FlashcardSet not found"));
 
-        // Create the original flashcard
+        // Create the main flashcard
         Flashcard flashcard = new Flashcard();
         flashcard.setQuestion(dto.getQuestion());
         flashcard.setAnswer(dto.getAnswer());
-        flashcard.setFlashcardSet(flashcardSet);
+        flashcardSet.addFlashcard(flashcard);
 
-        Flashcard savedCard = flashcardRepository.save(flashcard);
+        flashcardSetRepository.save(flashcardSet);
 
         // If createReverse is true, create and save the reverse card
         if (dto.isCreateReverse()) {
             Flashcard reverseCard = new Flashcard();
             reverseCard.setQuestion(dto.getAnswer());    // Swap question and answer
             reverseCard.setAnswer(dto.getQuestion());
-            reverseCard.setFlashcardSet(flashcardSet);
-            flashcardRepository.save(reverseCard);
+            flashcardSet.addFlashcard(reverseCard);
+            flashcardSetRepository.save(flashcardSet);
         }
 
-        return savedCard;
+        return flashcardSet;
     }
 
     public Flashcard getFlashcard(UUID id) {
@@ -92,16 +65,30 @@ public class FlashcardService {
         return flashcardRepository.findByFlashcardSetId(setId);
     }
 
-    public Flashcard updateFlashcard(UUID id, FlashcardDTO dto) {
-        Flashcard existingCard = flashcardRepository.findById(id)
+    public Flashcard updateFlashcard(UUID flashcardId, UUID flashcardSetId, FlashcardDTO dto) {
+        Flashcard flashcard = flashcardRepository.findById(flashcardId)
                 .orElseThrow(() -> new RuntimeException("Flashcard not found"));
 
-        existingCard.setQuestion(dto.getQuestion());
-        existingCard.setAnswer(dto.getAnswer());
-        return flashcardRepository.save(existingCard);
+        if(!flashcard.getFlashcardSet().getId().equals(flashcardSetId)) {
+            throw new RuntimeException("Flashcard does not belong to specified set");
+        }
+
+        flashcard.setQuestion(dto.getQuestion());
+        flashcard.setAnswer(dto.getAnswer());
+
+        return flashcardRepository.save(flashcard);
     }
 
-    public void deleteFlashcard(UUID id) {
-        flashcardRepository.deleteById(id);
+    public void deleteFlashcard(UUID flashcardId, UUID flashcardSetId) {
+        FlashcardSet flashcardSet = flashcardSetRepository.findById(flashcardSetId)
+                .orElseThrow(() -> new RuntimeException("FlashcardSet not found"));
+
+        Flashcard flashcard = flashcardRepository.findById(flashcardId)
+                .orElseThrow(() -> new RuntimeException("Flashcard not found"));
+
+        flashcardSet.removeFlashcard(flashcard);
+        flashcardSetRepository.save(flashcardSet);
     }
+
+
 }

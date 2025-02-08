@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
+@RequestMapping("/flashcard")
 public class FlashcardController {
 
     private final FlashcardService flashcardService;
@@ -23,61 +24,17 @@ public class FlashcardController {
         this.flashcardService = flashcardService;
     }
 
-    @PostMapping("/flashcard-set")
-    public ResponseEntity<FlashcardSet> createSet(@RequestBody FlashcardSetDTO flashcardSetDTO) {
-        FlashcardSet createdSet = flashcardService.createFlashcardSet(flashcardSetDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdSet);
-    }
-
-    @GetMapping("/flashcard-set")
-    public ResponseEntity<List<FlashcardSet>> getAllSets() {
-        List<FlashcardSet> sets = flashcardService.getAllFlashcardSets();
-        return ResponseEntity.ok(sets);
-    }
-
-    @GetMapping("/flashcard-set/{id}")
-    public ResponseEntity<FlashcardSet> getSet(@PathVariable UUID id) {
+    @PostMapping
+    public ResponseEntity<FlashcardSet> createCard(@RequestBody FlashcardDTO flashcardDTO) {
         try {
-            FlashcardSet set = flashcardService.getFlashcardSet(id);
-            return ResponseEntity.ok(set);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @PutMapping("/flashcard-set/{id}")
-    public ResponseEntity<FlashcardSet> updateSet(
-            @PathVariable UUID id,
-            @RequestBody FlashcardSetDTO flashcardSetDTO) {
-        try {
-            FlashcardSet updatedSet = flashcardService.updateFlashcardSet(id, flashcardSetDTO);
-            return ResponseEntity.ok(updatedSet);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @DeleteMapping("/flashcard-set/{id}")
-    public ResponseEntity<Void> deleteSet(@PathVariable UUID id) {
-        try {
-            flashcardService.deleteFlashcardSet(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @PostMapping("/flashcard")
-    public ResponseEntity<Flashcard> createCard(@RequestBody FlashcardDTO flashcardDTO) {
-        try {
-            Flashcard createdCard = flashcardService.createFlashcard(flashcardDTO);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdCard);
+            FlashcardSet updatedSet = flashcardService.createFlashcard(flashcardDTO);
+            return ResponseEntity.status(HttpStatus.CREATED).body(updatedSet);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();
         }
     }
 
-    @GetMapping("/flashcard/set/{setId}")
+    @GetMapping("/set/{setId}")
     public ResponseEntity<List<Flashcard>> getCardsInSet(@PathVariable UUID setId) {
         try {
             List<Flashcard> cards = flashcardService.getFlashcardsBySetId(setId);
@@ -87,7 +44,7 @@ public class FlashcardController {
         }
     }
 
-    @GetMapping("/flashcard/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<Flashcard> getCard(@PathVariable UUID id) {
         try {
             Flashcard card = flashcardService.getFlashcard(id);
@@ -97,22 +54,25 @@ public class FlashcardController {
         }
     }
 
-    @PutMapping("/flashcard/{id}")
+    @PutMapping("/{id}/set/{setId}")
     public ResponseEntity<Flashcard> updateCard(
             @PathVariable UUID id,
+            @PathVariable UUID setId,
             @RequestBody FlashcardDTO flashcardDTO) {
         try {
-            Flashcard updatedCard = flashcardService.updateFlashcard(id, flashcardDTO);
+            Flashcard updatedCard = flashcardService.updateFlashcard(id, setId, flashcardDTO);
             return ResponseEntity.ok(updatedCard);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
-    @DeleteMapping("/flashcard/{id}")
-    public ResponseEntity<Void> deleteCard(@PathVariable UUID id) {
+    @DeleteMapping("/{id}/set/{setId}")
+    public ResponseEntity<Void> deleteCard(
+            @PathVariable UUID id,
+            @PathVariable UUID setId) {
         try {
-            flashcardService.deleteFlashcard(id);
+            flashcardService.deleteFlashcard(id, setId);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();

@@ -8,6 +8,7 @@ import edu.bu.metcs.sphinx.model.FlashcardSet;
 import edu.bu.metcs.sphinx.repository.FlashcardRepository;
 import edu.bu.metcs.sphinx.repository.FlashcardSetRepository;
 import edu.bu.metcs.sphinx.service.FlashcardService;
+import edu.bu.metcs.sphinx.service.FlashcardSetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @Transactional
 class FlashcardIntegrationTest extends BaseIntegrationTest {
+
+    @Autowired
+    private FlashcardSetService flashcardSetService;
 
     @Autowired
     private FlashcardService flashcardService;
@@ -55,7 +59,7 @@ class FlashcardIntegrationTest extends BaseIntegrationTest {
     @Test
     void shouldCreateAndRetrieveFlashcardSet() {
         // When we create a new flashcard set
-        FlashcardSet createdSet = flashcardService.createFlashcardSet(testSetDTO);
+        FlashcardSet createdSet = flashcardSetService.createFlashcardSet(testSetDTO);
 
         // Then the set should be saved with an ID
         assertNotNull(createdSet.getId(), "Created set should have an ID");
@@ -63,7 +67,7 @@ class FlashcardIntegrationTest extends BaseIntegrationTest {
         assertEquals(testSetDTO.getDescription(), createdSet.getDescription(), "Set description should match");
 
         // And we should be able to retrieve it from the database
-        FlashcardSet retrievedSet = flashcardService.getFlashcardSet(createdSet.getId());
+        FlashcardSet retrievedSet = flashcardSetService.getFlashcardSet(createdSet.getId());
         assertNotNull(retrievedSet, "Should be able to retrieve the created set");
         assertEquals(createdSet.getId(), retrievedSet.getId(), "Retrieved set should have the same ID");
     }
@@ -71,11 +75,11 @@ class FlashcardIntegrationTest extends BaseIntegrationTest {
     @Test
     void shouldCreateFlashcardWithReverseCard() {
         // Given a flashcard set exists
-        FlashcardSet createdSet = flashcardService.createFlashcardSet(testSetDTO);
+        FlashcardSet createdSet = flashcardSetService.createFlashcardSet(testSetDTO);
         testCardDTO.setFlashcardSetId(createdSet.getId());
 
         // When we create a flashcard with createReverse=true
-        Flashcard createdCard = flashcardService.createFlashcard(testCardDTO);
+        flashcardService.createFlashcard(testCardDTO);
 
         // Then both the original and reverse cards should exist
         List<Flashcard> cardsInSet = flashcardService.getFlashcardsBySetId(createdSet.getId());
@@ -96,9 +100,11 @@ class FlashcardIntegrationTest extends BaseIntegrationTest {
     @Test
     void shouldUpdateFlashcard() {
         // Given a flashcard exists
-        FlashcardSet createdSet = flashcardService.createFlashcardSet(testSetDTO);
+        FlashcardSet createdSet = flashcardSetService.createFlashcardSet(testSetDTO);
         testCardDTO.setFlashcardSetId(createdSet.getId());
-        Flashcard createdCard = flashcardService.createFlashcard(testCardDTO);
+        flashcardService.createFlashcard(testCardDTO);
+
+        Flashcard createdCard = flashcardRepository.findByFlashcardSetId(createdSet.getId()).get(0);
 
         // When we update the flashcard
         String updatedQuestion = "What is TDD?";
@@ -108,7 +114,10 @@ class FlashcardIntegrationTest extends BaseIntegrationTest {
         updateDTO.setQuestion(updatedQuestion);
         updateDTO.setAnswer(updatedAnswer);
 
-        Flashcard updatedCard = flashcardService.updateFlashcard(createdCard.getId(), updateDTO);
+        Flashcard updatedCard = flashcardService.updateFlashcard(
+                createdCard.getId(),
+                createdSet.getId(),
+                updateDTO);
 
         // Then the changes should be persisted
         assertNotNull(updatedCard, "Updated card should not be null");
@@ -124,15 +133,15 @@ class FlashcardIntegrationTest extends BaseIntegrationTest {
     @Test
     void shouldDeleteFlashcardSet() {
         // Given a flashcard set with cards exists
-        FlashcardSet createdSet = flashcardService.createFlashcardSet(testSetDTO);
+        FlashcardSet createdSet = flashcardSetService.createFlashcardSet(testSetDTO);
         testCardDTO.setFlashcardSetId(createdSet.getId());
         flashcardService.createFlashcard(testCardDTO);
 
         // When we delete the set
-        flashcardService.deleteFlashcardSet(createdSet.getId());
+        flashcardSetService.deleteFlashcardSet(createdSet.getId());
 
         // Then the set and all its cards should be deleted
-        List<FlashcardSet> allSets = flashcardService.getAllFlashcardSets();
+        List<FlashcardSet> allSets = flashcardSetService.getAllFlashcardSets();
         assertTrue(allSets.isEmpty(), "No sets should remain after deletion");
 
         List<Flashcard> allCards = flashcardRepository.findAll();
