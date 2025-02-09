@@ -1,15 +1,12 @@
-# application-dev.yml (development environment)
 spring:
-  application:
-    name: sphinx-server
   datasource:
     url: jdbc:postgresql://localhost:5432/sphinx
     username: postgres
-    password: postgres
+    password: qwerdf123 
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: update  
     show-sql: true
     properties:
       hibernate:
