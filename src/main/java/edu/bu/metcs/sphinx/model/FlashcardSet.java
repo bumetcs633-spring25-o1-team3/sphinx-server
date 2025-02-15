@@ -19,8 +19,15 @@ public class FlashcardSet {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id", nullable = false)
+    private User owner;
+
     @OneToMany(mappedBy = "flashcardSet", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Flashcard> flashcards = new HashSet<>();
+
+    @Column(name = "is_public")
+    private boolean isPublic = false;
 
     public FlashcardSet() {}
 
@@ -37,6 +44,14 @@ public class FlashcardSet {
     public void removeFlashcard(Flashcard flashcard) {
         flashcards.remove(flashcard);
         flashcard.setFlashcardSet(null);
+    }
+
+    public User getOwner() {
+        return owner;
+    }
+
+    public void setOwner(User owner) {
+        this.owner = owner;
     }
 
     public UUID getId() {
@@ -65,5 +80,13 @@ public class FlashcardSet {
 
     public void setFlashcards(Set<Flashcard> flashcards) {
         this.flashcards = flashcards;
+    }
+
+    public boolean isPublic() {
+        return isPublic;
+    }
+
+    public void setPublic(boolean isPublic) {
+        this.isPublic = isPublic;
     }
 }
