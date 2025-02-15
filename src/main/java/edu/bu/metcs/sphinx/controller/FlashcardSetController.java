@@ -2,6 +2,7 @@ package edu.bu.metcs.sphinx.controller;
 
 import edu.bu.metcs.sphinx.dto.FlashcardSetDTO;
 import edu.bu.metcs.sphinx.model.FlashcardSet;
+import edu.bu.metcs.sphinx.security.util.SecurityUtils;
 import edu.bu.metcs.sphinx.service.FlashcardSetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,8 @@ public class FlashcardSetController {
 
     @PostMapping
     public ResponseEntity<FlashcardSetDTO> createSet(@RequestBody FlashcardSetDTO flashcardSetDTO) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId();
+        flashcardSetDTO.setOwnerId(currentUserId);
         FlashcardSet createdSet = flashcardSetService.createFlashcardSet(flashcardSetDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(FlashcardSetDTO.fromEntity(createdSet));
     }

@@ -13,6 +13,7 @@ public class FlashcardSetDTO {
     private Set<FlashcardDTO> flashcards = new HashSet<>();
     private String ownerName;
     private UUID ownerId;
+    private boolean isPublic;
 
     public FlashcardSetDTO() {}
 
@@ -69,6 +70,14 @@ public class FlashcardSetDTO {
         this.ownerId = ownerId;
     }
 
+    public boolean isPublic() {
+        return isPublic;
+    }
+
+    public void setPublic(boolean aPublic) {
+        isPublic = aPublic;
+    }
+
     public static FlashcardSetDTO fromEntity(FlashcardSet entity) {
         FlashcardSetDTO dto = new FlashcardSetDTO();
         dto.setId(entity.getId());
@@ -76,8 +85,8 @@ public class FlashcardSetDTO {
         dto.setDescription(entity.getDescription());
         if (entity.getOwner() != null) {
             dto.setOwnerName(entity.getOwner().getName());
-            dto.setOwnerId(entity.getOwner().getId());
         }
+        dto.setPublic(entity.isPublic());
         return dto;
     }
 }

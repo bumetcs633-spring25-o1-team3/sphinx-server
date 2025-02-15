@@ -2,8 +2,9 @@ package edu.bu.metcs.sphinx.service;
 
 import edu.bu.metcs.sphinx.dto.FlashcardSetDTO;
 import edu.bu.metcs.sphinx.model.FlashcardSet;
-import edu.bu.metcs.sphinx.repository.FlashcardRepository;
+import edu.bu.metcs.sphinx.model.User;
 import edu.bu.metcs.sphinx.repository.FlashcardSetRepository;
+import edu.bu.metcs.sphinx.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,16 +17,25 @@ import java.util.UUID;
 public class FlashcardSetService {
 
     private final FlashcardSetRepository flashcardSetRepository;
+    private final UserRepository userRepository;
 
     @Autowired
-    public FlashcardSetService(FlashcardSetRepository flashcardSetRepository) {
+    public FlashcardSetService(FlashcardSetRepository flashcardSetRepository,
+                               UserRepository userRepository) {
         this.flashcardSetRepository = flashcardSetRepository;
+        this.userRepository = userRepository;
     }
 
     public FlashcardSet createFlashcardSet(FlashcardSetDTO dto) {
+        User owner = userRepository.findById(dto.getOwnerId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         FlashcardSet flashcardSet = new FlashcardSet();
         flashcardSet.setName(dto.getName());
         flashcardSet.setDescription(dto.getDescription());
+        flashcardSet.setPublic(dto.isPublic());
+        flashcardSet.setOwner(owner);
+
         return flashcardSetRepository.save(flashcardSet);
     }
 
@@ -44,6 +54,7 @@ public class FlashcardSetService {
 
         existingSet.setName(dto.getName());
         existingSet.setDescription(dto.getDescription());
+        existingSet.setPublic(dto.isPublic());
         return flashcardSetRepository.save(existingSet);
     }
 

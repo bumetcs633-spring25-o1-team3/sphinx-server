@@ -4,8 +4,10 @@ import edu.bu.metcs.sphinx.dto.FlashcardDTO;
 import edu.bu.metcs.sphinx.dto.FlashcardSetDTO;
 import edu.bu.metcs.sphinx.model.Flashcard;
 import edu.bu.metcs.sphinx.model.FlashcardSet;
+import edu.bu.metcs.sphinx.model.User;
 import edu.bu.metcs.sphinx.repository.FlashcardRepository;
 import edu.bu.metcs.sphinx.repository.FlashcardSetRepository;
+import edu.bu.metcs.sphinx.repository.UserRepository;
 import edu.bu.metcs.sphinx.service.FlashcardService;
 import edu.bu.metcs.sphinx.service.FlashcardSetService;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,19 +39,31 @@ class FlashcardIntegrationTest {
     @Autowired
     private FlashcardRepository flashcardRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     private FlashcardSetDTO testSetDTO;
     private FlashcardDTO testCardDTO;
+    private User testUser;
 
     @BeforeEach
     void setUp() {
         // Clean up the database before each test
         flashcardRepository.deleteAll();
         flashcardSetRepository.deleteAll();
+        userRepository.deleteAll();
+
+        testUser = new User();
+        testUser.setEmail("test@bu.edu");
+        testUser.setName("Test User");
+        userRepository.save(testUser);
 
         // Create test DTOs for our tests
         testSetDTO = new FlashcardSetDTO();
         testSetDTO.setName("Software Quality Management");
         testSetDTO.setDescription("Core concepts of SQM course");
+        testSetDTO.setPublic(true);
+        testSetDTO.setOwnerId(testUser.getId());
 
         testCardDTO = new FlashcardDTO();
         testCardDTO.setQuestion("What is Test-Driven Development?");
@@ -147,5 +161,26 @@ class FlashcardIntegrationTest {
 
         List<Flashcard> allCards = flashcardRepository.findAll();
         assertTrue(allCards.isEmpty(), "No cards should remain after set deletion");
+
+        // And the user should still exist
+        assertTrue(userRepository.existsById(testUser.getId()), "User should still exist after set deletion");
+    }
+
+    @Test
+    void shouldUpdateFlashcardSetVisibility() {
+        // Given a public flashcard set
+        FlashcardSet publicSet = flashcardSetService.createFlashcardSet(testSetDTO);
+        assertTrue(publicSet.isPublic(), "Set should start as public");
+
+        // When updating to private
+        testSetDTO.setPublic(false);
+        FlashcardSet updatedSet = flashcardSetService.updateFlashcardSet(publicSet.getId(), testSetDTO);
+
+        // Then the visibility should be updated
+        assertFalse(updatedSet.isPublic(), "Set should now be private");
+
+        // And the change should be persisted
+        FlashcardSet retrievedSet = flashcardSetService.getFlashcardSet(publicSet.getId());
+        assertFalse(retrievedSet.isPublic(), "Retrieved set should reflect visibility change");
     }
 }
