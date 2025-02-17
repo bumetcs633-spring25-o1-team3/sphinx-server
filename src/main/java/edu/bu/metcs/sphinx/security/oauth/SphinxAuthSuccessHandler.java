@@ -31,6 +31,6 @@ public class SphinxAuthSuccessHandler implements AuthenticationSuccessHandler {
         session.setAttribute("userName", oauthUser.getName());
 
         // Redirect to home
-        response.sendRedirect(frontendUrl + "/home");
+        response.sendRedirect(frontendUrl);
     }
 }
