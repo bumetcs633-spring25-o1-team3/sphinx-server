@@ -45,8 +45,9 @@ public class SecurityConfig {
                         .successHandler(sphinxAuthSuccessHandler)
                 )
                 .logout(logout -> logout
-                        .logoutSuccessUrl("/")
+                        .logoutUrl("/logout")
                         .invalidateHttpSession(true)
+                        .clearAuthentication(true)
                         .deleteCookies("JSESSIONID")
                 );
 
