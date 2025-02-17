@@ -2,6 +2,7 @@ package edu.bu.metcs.sphinx.controller;
 
 import edu.bu.metcs.sphinx.dto.FlashcardSetDTO;
 import edu.bu.metcs.sphinx.model.FlashcardSet;
+import edu.bu.metcs.sphinx.security.util.SecurityUtils;
 import edu.bu.metcs.sphinx.service.FlashcardSetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/flashcard-set")
@@ -23,34 +25,39 @@ public class FlashcardSetController {
     }
 
     @PostMapping
-    public ResponseEntity<FlashcardSet> createSet(@RequestBody FlashcardSetDTO flashcardSetDTO) {
+    public ResponseEntity<FlashcardSetDTO> createSet(@RequestBody FlashcardSetDTO flashcardSetDTO) {
+        UUID currentUserId = SecurityUtils.getCurrentUserId();
+        flashcardSetDTO.setOwnerId(currentUserId);
         FlashcardSet createdSet = flashcardSetService.createFlashcardSet(flashcardSetDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdSet);
+        return ResponseEntity.status(HttpStatus.CREATED).body(FlashcardSetDTO.fromEntity(createdSet));
     }
 
     @GetMapping
-    public ResponseEntity<List<FlashcardSet>> getAllSets() {
+    public ResponseEntity<List<FlashcardSetDTO>> getAllSets() {
         List<FlashcardSet> sets = flashcardSetService.getAllFlashcardSets();
-        return ResponseEntity.ok(sets);
+        List<FlashcardSetDTO> dtos = sets.stream()
+                .map(FlashcardSetDTO::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<FlashcardSet> getSet(@PathVariable UUID id) {
+    public ResponseEntity<FlashcardSetDTO> getSet(@PathVariable UUID id) {
         try {
             FlashcardSet set = flashcardSetService.getFlashcardSet(id);
-            return ResponseEntity.ok(set);
+            return ResponseEntity.ok(FlashcardSetDTO.fromEntity(set));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<FlashcardSet> updateSet(
+    public ResponseEntity<FlashcardSetDTO> updateSet(
             @PathVariable UUID id,
             @RequestBody FlashcardSetDTO flashcardSetDTO) {
         try {
             FlashcardSet updatedSet = flashcardSetService.updateFlashcardSet(id, flashcardSetDTO);
-            return ResponseEntity.ok(updatedSet);
+            return ResponseEntity.ok(FlashcardSetDTO.fromEntity(updatedSet));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
