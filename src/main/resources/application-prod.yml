@@ -23,5 +23,5 @@ server:
       cookie:
         secure: true
         same-site: none
-        domain: .onrender.com
+        domain: https://sphinx-web.onrender.com
       timeout: 30m
