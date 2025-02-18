@@ -1,12 +1,10 @@
-package edu.bu.metcs.sphinx.security.config;
+package edu.bu.metcs.sphinx.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.session.web.http.CookieHttpSessionIdResolver;
 import org.springframework.session.web.http.CookieSerializer;
 import org.springframework.session.web.http.DefaultCookieSerializer;
-import org.springframework.session.web.http.HttpSessionIdResolver;
 
 @Configuration
 public class SessionConfig {
@@ -24,7 +22,7 @@ public class SessionConfig {
         // Set the cookie name
         serializer.setCookieName("SPHINX_SESSION");
 
-        // Use SameSite=None for cross-origin requests
+        // Use SameSite attribute based on configuration
         serializer.setSameSite(sameSite);
 
         // Set secure flag for HTTPS connections
@@ -34,10 +32,5 @@ public class SessionConfig {
         serializer.setCookiePath("/");
 
         return serializer;
-    }
-
-    @Bean
-    public HttpSessionIdResolver httpSessionIdResolver() {
-        return new CookieHttpSessionIdResolver();
     }
 }

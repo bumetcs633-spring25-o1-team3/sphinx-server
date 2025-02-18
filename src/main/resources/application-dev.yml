@@ -15,6 +15,24 @@ spring:
       hibernate:
         format_sql: true
         use_sql_comments: true
+  session:
+    store-type: jdbc
+    jdbc:
+      initialize-schema: always
+      schema: classpath:org/springframework/session/jdbc/schema-postgresql.sql
+      table-name: SPRING_SESSION
 
 server:
   port: 8085
+  servlet:
+    session:
+      cookie:
+        secure: false
+        same-site: lax
+        http-only: true
+        max-age: 3600
+
+app:
+  cookie:
+    secure: false
+    same-site: lax
