@@ -1,7 +1,10 @@
 package edu.bu.metcs.sphinx.security.oauth;
 
+import edu.bu.metcs.sphinx.controller.AuthController;
 import edu.bu.metcs.sphinx.model.User;
 import edu.bu.metcs.sphinx.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -14,15 +17,23 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class SphinxOAuth2UserService extends DefaultOAuth2UserService {
 
+    private static final Logger logger = LoggerFactory.getLogger(SphinxOAuth2UserService.class);
+
     @Autowired
     private UserRepository userRepository;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+        logger.info("OAuth2 authentication request received from: {}",
+                userRequest.getClientRegistration().getRegistrationId());
+
         OAuth2User oauth2User = super.loadUser(userRequest);
+        logger.info("OAuth2 user loaded: {}", oauth2User.getName());
+
         try {
             return processOAuth2User(userRequest, oauth2User);
         } catch (Exception ex) {
+            logger.error("Error processing OAuth2 user: {}", ex.getMessage(), ex);
             throw new OAuth2AuthenticationException(ex.getMessage());
         }
     }

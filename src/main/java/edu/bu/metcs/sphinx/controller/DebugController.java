@@ -2,6 +2,8 @@ package edu.bu.metcs.sphinx.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +18,10 @@ import java.util.Map;
 @RestController
 @RequestMapping("/debug")
 public class DebugController {
+
+    @Autowired
+    private Environment env;
+
     @GetMapping("/auth-status")
     public Map<String, Object> getAuthStatus(HttpServletRequest request,
                                              @AuthenticationPrincipal OAuth2User principal) {
@@ -36,6 +42,22 @@ public class DebugController {
         debugInfo.put("requestHeaders", getHeadersMap(request));
 
         return debugInfo;
+    }
+
+    @GetMapping("/environment")
+    public Map<String, String> getEnvironment() {
+        Map<String, String> envInfo = new HashMap<>();
+        envInfo.put("activeProfiles", String.join(", ", env.getActiveProfiles()));
+        envInfo.put("frontendUrl", env.getProperty("app.frontend.url"));
+        envInfo.put("serverPort", env.getProperty("server.port"));
+        envInfo.put("dataSourceUrl", maskSensitiveInfo(env.getProperty("spring.datasource.url")));
+        // Don't include credentials
+        return envInfo;
+    }
+
+    private String maskSensitiveInfo(String input) {
+        if (input == null) return null;
+        return input.replaceAll("password=.*?(&|$)", "password=*****$1");
     }
 
     private Map<String, Object> getSessionAttributes(HttpSession session) {

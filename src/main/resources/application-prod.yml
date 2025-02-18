@@ -18,3 +18,10 @@ spring:
 
 server:
   port: ${PORT:8085}
+  servlet:
+    session:
+      cookie:
+        secure: true
+        same-site: none
+        domain: .onrender.com
+      timeout: 30m
