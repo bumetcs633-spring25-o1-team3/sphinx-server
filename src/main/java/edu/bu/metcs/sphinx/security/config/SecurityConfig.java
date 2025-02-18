@@ -57,14 +57,34 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+
+        // Allow requests from both development and production
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000",
                 "https://sphinx-web.onrender.com"
         ));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
+
+        // Allow all common HTTP methods
+        configuration.setAllowedMethods(Arrays.asList(
+                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+        ));
+
+        // Allow all headers
+        configuration.setAllowedHeaders(Arrays.asList(
+                "Authorization", "Cache-Control", "Content-Type", "Origin",
+                "X-Requested-With", "Accept"
+        ));
+
+        // This is critical - allow cookies to be sent in cross-origin requests
         configuration.setAllowCredentials(true);
-        configuration.setExposedHeaders(Arrays.asList("Set-Cookie", "Authorization"));
+
+        // Allow browsers to cache CORS response for 1 hour
+        configuration.setMaxAge(3600L);
+
+        // Expose headers that might be needed by the client
+        configuration.setExposedHeaders(Arrays.asList(
+                "Authorization", "Content-Disposition"
+        ));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
