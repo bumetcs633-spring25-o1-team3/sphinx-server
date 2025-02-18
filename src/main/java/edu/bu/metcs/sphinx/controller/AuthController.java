@@ -29,9 +29,8 @@ public class AuthController {
     public ResponseEntity<?> getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication == null || !authentication.isAuthenticated()
-                || authentication.getPrincipal().equals("anonymousUser")) {
-            return ResponseEntity.ok().build(); // Return empty response for unauthenticated users
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.ok().build();
         }
 
         try {
