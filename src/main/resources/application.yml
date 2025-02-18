@@ -12,6 +12,14 @@ spring:
             scope:
               - email
               - profile
+
 app:
   frontend:
     url: ${FRONTEND_URL:http://localhost:3000}
+
+jwt:
+  secret: ${JWT_SECRET:0Bvx9tRmNpQaWdYzEjKgLu7iS5vJhGeR3yFxC1kD4lF6n2A8}
+  access-token:
+    expiration: 3600000  # 1 hour in milliseconds
+  refresh-token:
+    expiration: 604800000  # 7 days in milliseconds
