@@ -1,13 +1,16 @@
 package edu.bu.metcs.sphinx.security.config;
 
+import edu.bu.metcs.sphinx.security.jwt.JwtAuthenticationFilter;
+import edu.bu.metcs.sphinx.security.oauth.JwtAuthSuccessHandler;
 import edu.bu.metcs.sphinx.security.oauth.SphinxOAuth2UserService;
-import edu.bu.metcs.sphinx.security.oauth.SphinxAuthSuccessHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -19,13 +22,16 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final SphinxOAuth2UserService sphinxOAuth2UserService;
-    private final SphinxAuthSuccessHandler sphinxAuthSuccessHandler;
+    private final JwtAuthSuccessHandler jwtAuthSuccessHandler;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Autowired
     public SecurityConfig(SphinxOAuth2UserService sphinxOAuth2UserService,
-                          SphinxAuthSuccessHandler sphinxAuthSuccessHandler) {
+                          JwtAuthSuccessHandler jwtAuthSuccessHandler,
+                          JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.sphinxOAuth2UserService = sphinxOAuth2UserService;
-        this.sphinxAuthSuccessHandler = sphinxAuthSuccessHandler;
+        this.jwtAuthSuccessHandler = jwtAuthSuccessHandler;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
     @Bean
@@ -33,6 +39,9 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**", "/error", "/login/**").permitAll()
                         .requestMatchers("/public/**").permitAll()
@@ -42,14 +51,18 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(sphinxOAuth2UserService)
                         )
-                        .successHandler(sphinxAuthSuccessHandler)
+                        .successHandler(jwtAuthSuccessHandler)
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .invalidateHttpSession(true)
-                        .clearAuthentication(true)
-                        .deleteCookies("JSESSIONID")
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            // No session to invalidate in stateless auth
+                            response.setStatus(200);
+                        })
                 );
+
+        // Add JWT filter before UsernamePasswordAuthenticationFilter
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -63,11 +76,11 @@ public class SecurityConfig {
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-
 }
