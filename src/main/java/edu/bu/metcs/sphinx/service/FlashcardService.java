@@ -5,7 +5,6 @@ import edu.bu.metcs.sphinx.model.FlashcardSet;
 import edu.bu.metcs.sphinx.repository.FlashcardRepository;
 import edu.bu.metcs.sphinx.repository.FlashcardSetRepository;
 import edu.bu.metcs.sphinx.dto.FlashcardDTO;
-import edu.bu.metcs.sphinx.dto.FlashcardSetDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,9 +26,8 @@ public class FlashcardService {
         this.flashcardSetRepository = flashcardSetRepository;
     }
 
-
-
-    public FlashcardSet createFlashcard(FlashcardDTO dto) {
+    @Transactional
+    public Flashcard createFlashcard(FlashcardDTO dto) {
         FlashcardSet flashcardSet = flashcardSetRepository.findById(dto.getFlashcardSetId())
                 .orElseThrow(() -> new RuntimeException("FlashcardSet not found"));
 
@@ -50,7 +48,7 @@ public class FlashcardService {
             flashcardSetRepository.save(flashcardSet);
         }
 
-        return flashcardSet;
+        return flashcard;
     }
 
     public Flashcard getFlashcard(UUID id) {

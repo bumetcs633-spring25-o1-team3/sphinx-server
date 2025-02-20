@@ -26,10 +26,17 @@ public class FlashcardSetController {
 
     @PostMapping
     public ResponseEntity<FlashcardSetDTO> createSet(@RequestBody FlashcardSetDTO flashcardSetDTO) {
-        UUID currentUserId = SecurityUtils.getCurrentUserId();
-        flashcardSetDTO.setOwnerId(currentUserId);
-        FlashcardSet createdSet = flashcardSetService.createFlashcardSet(flashcardSetDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(FlashcardSetDTO.fromEntity(createdSet));
+        try {
+            UUID currentUserId = SecurityUtils.getCurrentUserId();
+            flashcardSetDTO.setOwnerId(currentUserId);
+            FlashcardSet createdSet = flashcardSetService.createFlashcardSet(flashcardSetDTO);
+            return ResponseEntity.status(HttpStatus.CREATED).body(FlashcardSetDTO.fromEntity(createdSet));
+        } catch (RuntimeException e) {
+            if (e.getMessage().equals("User not authenticated")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @GetMapping
@@ -40,6 +47,24 @@ public class FlashcardSetController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
+
+    @GetMapping("/my-sets")
+    public ResponseEntity<List<FlashcardSetDTO>> getMyFlashcardSets() {
+        try {
+            UUID currentUserId = SecurityUtils.getCurrentUserId();
+            List<FlashcardSet> userSets = flashcardSetService.getFlashcardSetsByOwnerId(currentUserId);
+            List<FlashcardSetDTO> setDTOs = userSets.stream()
+                    .map(FlashcardSetDTO::fromEntity)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(setDTOs);
+        } catch (RuntimeException e) {
+            if (e.getMessage().equals("User not authenticated")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<FlashcardSetDTO> getSet(@PathVariable UUID id) {
@@ -56,20 +81,50 @@ public class FlashcardSetController {
             @PathVariable UUID id,
             @RequestBody FlashcardSetDTO flashcardSetDTO) {
         try {
+            FlashcardSet existingSet = flashcardSetService.getFlashcardSet(id);
+            // Verify current user is the owner
+            try {
+                SecurityUtils.verifyCurrentUser(existingSet.getOwner().getId());
+            } catch (RuntimeException e) {
+                if (e.getMessage().equals("User not authenticated")) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                } else if (e.getMessage().equals("Unauthorized access")) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+                throw e;
+            }
             FlashcardSet updatedSet = flashcardSetService.updateFlashcardSet(id, flashcardSetDTO);
             return ResponseEntity.ok(FlashcardSetDTO.fromEntity(updatedSet));
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            if (e.getMessage().equals("FlashcardSet not found")) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteSet(@PathVariable UUID id) {
         try {
+            FlashcardSet existingSet = flashcardSetService.getFlashcardSet(id);
+            // Verify current user is the owner
+            try {
+                SecurityUtils.verifyCurrentUser(existingSet.getOwner().getId());
+            } catch (RuntimeException e) {
+                if (e.getMessage().equals("User not authenticated")) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                } else if (e.getMessage().equals("Unauthorized access")) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+                throw e;
+            }
             flashcardSetService.deleteFlashcardSet(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            if (e.getMessage().equals("FlashcardSet not found")) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 

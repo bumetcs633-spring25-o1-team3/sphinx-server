@@ -39,6 +39,10 @@ public class FlashcardSetService {
         return flashcardSetRepository.save(flashcardSet);
     }
 
+    public List<FlashcardSet> getFlashcardSetsByOwnerId(UUID userId) {
+        return flashcardSetRepository.findByOwnerId(userId);
+    }
+
     public List<FlashcardSet> getAllFlashcardSets() {
         return flashcardSetRepository.findAll();
     }

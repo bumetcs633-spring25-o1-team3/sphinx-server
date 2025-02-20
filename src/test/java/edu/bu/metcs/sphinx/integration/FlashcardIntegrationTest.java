@@ -98,11 +98,7 @@ class FlashcardIntegrationTest {
 
         // Then both the original and reverse cards should exist
         List<Flashcard> cardsInSet = flashcardService.getFlashcardsBySetId(createdSet.getId());
-
-        // We should have two cards (original + reverse)
         assertEquals(2, cardsInSet.size(), "Should have created both original and reverse cards");
-
-        // Verify we have both the original and reversed versions
         boolean hasOriginal = cardsInSet.stream()
                 .anyMatch(card -> card.getQuestion().equals(testCardDTO.getQuestion()));
         boolean hasReverse = cardsInSet.stream()
@@ -139,7 +135,6 @@ class FlashcardIntegrationTest {
         assertEquals(updatedQuestion, updatedCard.getQuestion(), "Question should be updated");
         assertEquals(updatedAnswer, updatedCard.getAnswer(), "Answer should be updated");
 
-        // And we should be able to retrieve the updated version
         Flashcard retrievedCard = flashcardService.getFlashcard(createdCard.getId());
         assertEquals(updatedQuestion, retrievedCard.getQuestion(), "Retrieved card should have updated question");
         assertEquals(updatedAnswer, retrievedCard.getAnswer(), "Retrieved card should have updated answer");
@@ -161,8 +156,6 @@ class FlashcardIntegrationTest {
 
         List<Flashcard> allCards = flashcardRepository.findAll();
         assertTrue(allCards.isEmpty(), "No cards should remain after set deletion");
-
-        // And the user should still exist
         assertTrue(userRepository.existsById(testUser.getId()), "User should still exist after set deletion");
     }
 
@@ -178,8 +171,6 @@ class FlashcardIntegrationTest {
 
         // Then the visibility should be updated
         assertFalse(updatedSet.isPublic(), "Set should now be private");
-
-        // And the change should be persisted
         FlashcardSet retrievedSet = flashcardSetService.getFlashcardSet(publicSet.getId());
         assertFalse(retrievedSet.isPublic(), "Retrieved set should reflect visibility change");
     }
