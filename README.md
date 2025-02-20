@@ -100,6 +100,7 @@ The application uses H2 in-memory database for testing (configured in `applicati
 ### Flashcard Sets
 
 - `GET /flashcard-set` - Get all flashcard sets
+- `GET /flashcard-set/my-sets` - Get current user's flashcard sets 
 - `GET /flashcard-set/{id}` - Get a specific flashcard set
 - `POST /flashcard-set` - Create a new flashcard set
 - `PUT /flashcard-set/{id}` - Update a flashcard set
