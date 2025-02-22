@@ -1,14 +1,12 @@
 package edu.bu.metcs.sphinx.dto;
 
 import edu.bu.metcs.sphinx.model.Flashcard;
-
 import java.util.UUID;
 
 public class FlashcardDTO {
     private UUID id;
     private String question;
     private String answer;
-    private UUID flashcardSetId;
     private boolean createReverse;
 
     public FlashcardDTO() {}
@@ -42,14 +40,6 @@ public class FlashcardDTO {
         this.answer = answer;
     }
 
-    public UUID getFlashcardSetId() {
-        return flashcardSetId;
-    }
-
-    public void setFlashcardSetId(UUID flashcardSetId) {
-        this.flashcardSetId = flashcardSetId;
-    }
-
     public boolean isCreateReverse() {
         return createReverse;
     }
@@ -63,9 +53,6 @@ public class FlashcardDTO {
         dto.setId(entity.getId());
         dto.setQuestion(entity.getQuestion());
         dto.setAnswer(entity.getAnswer());
-        if (entity.getFlashcardSet() != null) {
-            dto.setFlashcardSetId(entity.getFlashcardSet().getId());
-        }
         return dto;
     }
 }
