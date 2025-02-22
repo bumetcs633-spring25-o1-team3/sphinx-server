@@ -96,33 +96,39 @@ The application uses H2 in-memory database for testing (configured in `applicati
 
 - `GET /oauth2/authorization/google` - Initiate Google OAuth2 login
 - `GET /auth/user` - Get current authenticated user
+- `POST /auth/refresh-token` - Refreshes JWT tokens
 
 ### Flashcard Sets
 
-- `GET /flashcard-set` - Get all flashcard sets
-- `GET /flashcard-set/my-sets` - Get current user's flashcard sets 
-- `GET /flashcard-set/{id}` - Get a specific flashcard set
 - `POST /flashcard-set` - Create a new flashcard set
+
+```json
+{
+  "name": "string",
+  "description": "string",
+  "flashcards": [
+    {
+      "question": "string",
+      "answer": "string",
+      "createReverse": boolean
+    }
+  ],
+  "isPublic": boolean
+}
+```
+
+- `GET /flashcard-set/my-sets` - Retrieve user's flashcard sets
+- `GET /flashcard-set/{id}` - Get a specific flashcard set
 - `PUT /flashcard-set/{id}` - Update a flashcard set
 - `DELETE /flashcard-set/{id}` - Delete a flashcard set
-
-### Flashcards
-
-- `POST /flashcard` - Create a new flashcard
-- `GET /flashcard/set/{setId}` - Get all flashcards in a set
-- `GET /flashcard/{id}` - Get a specific flashcard
-- `PUT /flashcard/{id}/set/{setId}` - Update a flashcard
-- `DELETE /flashcard/{id}/set/{setId}` - Delete a flashcard
 
 ## Security
 
 The application implements the following security measures:
 
-- Google OAuth2 authentication
+- Google OAuth2 login
+- JWT based authentication and session management
 - CORS configuration for frontend integration
-- Session-based authentication
-- Protected API endpoints
-- CSRF protection (disabled for API endpoints)
 
 ## Deployment
 
