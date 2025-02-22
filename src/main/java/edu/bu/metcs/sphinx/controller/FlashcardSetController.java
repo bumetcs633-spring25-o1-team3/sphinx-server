@@ -39,15 +39,6 @@ public class FlashcardSetController {
         }
     }
 
-    @GetMapping
-    public ResponseEntity<List<FlashcardSetDTO>> getAllSets() {
-        List<FlashcardSet> sets = flashcardSetService.getAllFlashcardSets();
-        List<FlashcardSetDTO> dtos = sets.stream()
-                .map(FlashcardSetDTO::fromEntity)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(dtos);
-    }
-
     @GetMapping("/my-sets")
     public ResponseEntity<List<FlashcardSetDTO>> getMyFlashcardSets() {
         try {
@@ -82,7 +73,6 @@ public class FlashcardSetController {
             @RequestBody FlashcardSetDTO flashcardSetDTO) {
         try {
             FlashcardSet existingSet = flashcardSetService.getFlashcardSet(id);
-            // Verify current user is the owner
             try {
                 SecurityUtils.verifyCurrentUser(existingSet.getOwner().getId());
             } catch (RuntimeException e) {
@@ -93,6 +83,7 @@ public class FlashcardSetController {
                 }
                 throw e;
             }
+
             FlashcardSet updatedSet = flashcardSetService.updateFlashcardSet(id, flashcardSetDTO);
             return ResponseEntity.ok(FlashcardSetDTO.fromEntity(updatedSet));
         } catch (RuntimeException e) {

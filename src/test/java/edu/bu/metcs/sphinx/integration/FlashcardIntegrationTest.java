@@ -8,7 +8,6 @@ import edu.bu.metcs.sphinx.model.User;
 import edu.bu.metcs.sphinx.repository.FlashcardRepository;
 import edu.bu.metcs.sphinx.repository.FlashcardSetRepository;
 import edu.bu.metcs.sphinx.repository.UserRepository;
-import edu.bu.metcs.sphinx.service.FlashcardService;
 import edu.bu.metcs.sphinx.service.FlashcardSetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,9 +16,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
@@ -29,9 +30,6 @@ class FlashcardIntegrationTest {
 
     @Autowired
     private FlashcardSetService flashcardSetService;
-
-    @Autowired
-    private FlashcardService flashcardService;
 
     @Autowired
     private FlashcardSetRepository flashcardSetRepository;
@@ -58,7 +56,6 @@ class FlashcardIntegrationTest {
         testUser.setName("Test User");
         userRepository.save(testUser);
 
-        // Create test DTOs for our tests
         testSetDTO = new FlashcardSetDTO();
         testSetDTO.setName("Software Quality Management");
         testSetDTO.setDescription("Core concepts of SQM course");
@@ -69,109 +66,117 @@ class FlashcardIntegrationTest {
         testCardDTO.setQuestion("What is Test-Driven Development?");
         testCardDTO.setAnswer("A software development approach where tests are written before code");
         testCardDTO.setCreateReverse(true);
+
+        Set<FlashcardDTO> flashcards = new HashSet<>();
+        flashcards.add(testCardDTO);
+        testSetDTO.setFlashcards(flashcards);
     }
 
     @Test
-    void shouldCreateAndRetrieveFlashcardSet() {
+    void shouldCreateFlashcardSetWithCards() {
         // When we create a new flashcard set
         FlashcardSet createdSet = flashcardSetService.createFlashcardSet(testSetDTO);
 
-        // Then the set should be saved with an ID
+        // Then the set should be saved with correct properties
         assertNotNull(createdSet.getId(), "Created set should have an ID");
         assertEquals(testSetDTO.getName(), createdSet.getName(), "Set name should match");
         assertEquals(testSetDTO.getDescription(), createdSet.getDescription(), "Set description should match");
+        assertEquals(testUser.getId(), createdSet.getOwner().getId(), "Owner should match");
 
-        // And we should be able to retrieve it from the database
-        FlashcardSet retrievedSet = flashcardSetService.getFlashcardSet(createdSet.getId());
-        assertNotNull(retrievedSet, "Should be able to retrieve the created set");
-        assertEquals(createdSet.getId(), retrievedSet.getId(), "Retrieved set should have the same ID");
+        // And the flashcards should be created (including reverse card)
+        assertEquals(2, createdSet.getFlashcards().size(), "Should have two cards (original + reverse)");
+        for (Flashcard card : createdSet.getFlashcards()) {
+            if (card.getQuestion().equals(testCardDTO.getQuestion())) {
+                assertEquals(testCardDTO.getAnswer(), card.getAnswer());
+            } else if (card.getQuestion().equals(testCardDTO.getAnswer())) {
+                assertEquals(testCardDTO.getQuestion(), card.getAnswer());
+            }
+        }
     }
 
     @Test
-    void shouldCreateFlashcardWithReverseCard() {
-        // Given a flashcard set exists
-        FlashcardSet createdSet = flashcardSetService.createFlashcardSet(testSetDTO);
-        testCardDTO.setFlashcardSetId(createdSet.getId());
+    void shouldUpdateFlashcardSetWithCards() {
+        // Given a created flashcard set
+        FlashcardSet originalSet = flashcardSetService.createFlashcardSet(testSetDTO);
 
-        // When we create a flashcard with createReverse=true
-        flashcardService.createFlashcard(testCardDTO);
+        // When we update the set
+        FlashcardSetDTO updateDTO = new FlashcardSetDTO();
+        updateDTO.setName("Updated SQM");
+        updateDTO.setDescription("Updated description");
+        updateDTO.setPublic(false);
 
-        // Then both the original and reverse cards should exist
-        List<Flashcard> cardsInSet = flashcardService.getFlashcardsBySetId(createdSet.getId());
-        assertEquals(2, cardsInSet.size(), "Should have created both original and reverse cards");
-        boolean hasOriginal = cardsInSet.stream()
-                .anyMatch(card -> card.getQuestion().equals(testCardDTO.getQuestion()));
-        boolean hasReverse = cardsInSet.stream()
-                .anyMatch(card -> card.getQuestion().equals(testCardDTO.getAnswer()));
+        // Modify existing card and add a new one
+        Set<FlashcardDTO> updatedCards = new HashSet<>();
 
-        assertTrue(hasOriginal, "Should have the original card");
-        assertTrue(hasReverse, "Should have the reverse card");
+        // Modified version of existing card
+        FlashcardDTO modifiedCard = new FlashcardDTO();
+        modifiedCard.setId(originalSet.getFlashcards().iterator().next().getId());
+        modifiedCard.setQuestion("Updated TDD Question");
+        modifiedCard.setAnswer("Updated TDD Answer");
+        updatedCards.add(modifiedCard);
+
+        // New card
+        FlashcardDTO newCard = new FlashcardDTO();
+        newCard.setQuestion("What is CI/CD?");
+        newCard.setAnswer("Continuous Integration/Continuous Deployment");
+        newCard.setCreateReverse(true);
+        updatedCards.add(newCard);
+
+        updateDTO.setFlashcards(updatedCards);
+
+        FlashcardSet updatedSet = flashcardSetService.updateFlashcardSet(originalSet.getId(), updateDTO);
+
+        // Then the set should be updated
+        assertEquals("Updated SQM", updatedSet.getName());
+        assertEquals("Updated description", updatedSet.getDescription());
+        assertFalse(updatedSet.isPublic());
+
+
+        assertEquals(3, updatedSet.getFlashcards().size());
+        for (Flashcard card : updatedSet.getFlashcards()) {
+            switch (card.getQuestion()) {
+                case "Updated TDD Question" -> assertEquals("Updated TDD Answer", card.getAnswer());
+                case "What is CI/CD?" -> assertEquals("Continuous Integration/Continuous Deployment", card.getAnswer());
+                case "Continuous Integration/Continuous Deployment" -> assertEquals("What is CI/CD?", card.getAnswer());
+            }
+        }
     }
 
     @Test
-    void shouldUpdateFlashcard() {
-        // Given a flashcard exists
-        FlashcardSet createdSet = flashcardSetService.createFlashcardSet(testSetDTO);
-        testCardDTO.setFlashcardSetId(createdSet.getId());
-        flashcardService.createFlashcard(testCardDTO);
+    void shouldGetFlashcardSetsByOwner() {
+        // Given multiple flashcard sets for different users
+        FlashcardSet set1 = flashcardSetService.createFlashcardSet(testSetDTO);
 
-        Flashcard createdCard = flashcardRepository.findByFlashcardSetId(createdSet.getId()).get(0);
+        User anotherUser = new User();
+        anotherUser.setEmail("another@bu.edu");
+        anotherUser.setName("Another User");
+        userRepository.save(anotherUser);
 
-        // When we update the flashcard
-        String updatedQuestion = "What is TDD?";
-        String updatedAnswer = "A development approach emphasizing test-first methodology";
+        FlashcardSetDTO anotherSetDTO = new FlashcardSetDTO();
+        anotherSetDTO.setName("Another Set");
+        anotherSetDTO.setDescription("Another description");
+        anotherSetDTO.setOwnerId(anotherUser.getId());
+        FlashcardSet set2 = flashcardSetService.createFlashcardSet(anotherSetDTO);
 
-        FlashcardDTO updateDTO = new FlashcardDTO();
-        updateDTO.setQuestion(updatedQuestion);
-        updateDTO.setAnswer(updatedAnswer);
+        // When we get sets by owner
+        List<FlashcardSet> userSets = flashcardSetService.getFlashcardSetsByOwnerId(testUser.getId());
 
-        Flashcard updatedCard = flashcardService.updateFlashcard(
-                createdCard.getId(),
-                createdSet.getId(),
-                updateDTO);
-
-        // Then the changes should be persisted
-        assertNotNull(updatedCard, "Updated card should not be null");
-        assertEquals(updatedQuestion, updatedCard.getQuestion(), "Question should be updated");
-        assertEquals(updatedAnswer, updatedCard.getAnswer(), "Answer should be updated");
-
-        Flashcard retrievedCard = flashcardService.getFlashcard(createdCard.getId());
-        assertEquals(updatedQuestion, retrievedCard.getQuestion(), "Retrieved card should have updated question");
-        assertEquals(updatedAnswer, retrievedCard.getAnswer(), "Retrieved card should have updated answer");
+        // Then we should only get the sets owned by the test user
+        assertEquals(1, userSets.size());
+        assertEquals(set1.getId(), userSets.get(0).getId());
     }
 
     @Test
     void shouldDeleteFlashcardSet() {
-        // Given a flashcard set with cards exists
+        // Given a created flashcard set
         FlashcardSet createdSet = flashcardSetService.createFlashcardSet(testSetDTO);
-        testCardDTO.setFlashcardSetId(createdSet.getId());
-        flashcardService.createFlashcard(testCardDTO);
+        UUID setId = createdSet.getId();
 
         // When we delete the set
-        flashcardSetService.deleteFlashcardSet(createdSet.getId());
+        flashcardSetService.deleteFlashcardSet(setId);
 
-        // Then the set and all its cards should be deleted
-        List<FlashcardSet> allSets = flashcardSetService.getAllFlashcardSets();
-        assertTrue(allSets.isEmpty(), "No sets should remain after deletion");
-
-        List<Flashcard> allCards = flashcardRepository.findAll();
-        assertTrue(allCards.isEmpty(), "No cards should remain after set deletion");
-        assertTrue(userRepository.existsById(testUser.getId()), "User should still exist after set deletion");
-    }
-
-    @Test
-    void shouldUpdateFlashcardSetVisibility() {
-        // Given a public flashcard set
-        FlashcardSet publicSet = flashcardSetService.createFlashcardSet(testSetDTO);
-        assertTrue(publicSet.isPublic(), "Set should start as public");
-
-        // When updating to private
-        testSetDTO.setPublic(false);
-        FlashcardSet updatedSet = flashcardSetService.updateFlashcardSet(publicSet.getId(), testSetDTO);
-
-        // Then the visibility should be updated
-        assertFalse(updatedSet.isPublic(), "Set should now be private");
-        FlashcardSet retrievedSet = flashcardSetService.getFlashcardSet(publicSet.getId());
-        assertFalse(retrievedSet.isPublic(), "Retrieved set should reflect visibility change");
+        // Then the set and its cards should be deleted
+        assertFalse(flashcardSetRepository.existsById(setId));
+        assertEquals(0, flashcardRepository.findByFlashcardSetId(setId).size());
     }
 }

@@ -1,10 +1,12 @@
 package edu.bu.metcs.sphinx.dto;
 
+import edu.bu.metcs.sphinx.model.Flashcard;
 import edu.bu.metcs.sphinx.model.FlashcardSet;
 
 import java.util.UUID;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
 public class FlashcardSetDTO {
     private UUID id;
@@ -74,8 +76,8 @@ public class FlashcardSetDTO {
         return isPublic;
     }
 
-    public void setPublic(boolean aPublic) {
-        isPublic = aPublic;
+    public void setPublic(boolean isPublic) {
+        this.isPublic = isPublic;
     }
 
     public static FlashcardSetDTO fromEntity(FlashcardSet entity) {
@@ -83,10 +85,17 @@ public class FlashcardSetDTO {
         dto.setId(entity.getId());
         dto.setName(entity.getName());
         dto.setDescription(entity.getDescription());
+        dto.setPublic(entity.isPublic());
+
         if (entity.getOwner() != null) {
             dto.setOwnerName(entity.getOwner().getName());
+            dto.setOwnerId(entity.getOwner().getId());
         }
-        dto.setPublic(entity.isPublic());
+
+        dto.setFlashcards(entity.getFlashcards().stream()
+                .map(FlashcardDTO::fromEntity)
+                .collect(Collectors.toSet()));
+
         return dto;
     }
 }
